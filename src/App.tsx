@@ -1,121 +1,132 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useCallback } from "react";
+import type { Color, GuessEntry, PickerSide, GameSettings } from "./types";
+import { ALL_COLORS, DEFAULT_SETTINGS } from "./constants";
+import { computeFeedback, generateSecret } from "./utils/feedback";
+import { useStats } from "./hooks/useStats";
+import { Header } from "./components/Header";
+import { Sidebar } from "./components/Sidebar";
+import { InfoPanel } from "./components/InfoPanel";
+import { Board } from "./components/Board";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function initGuess(slots: number): Color[] {
+  return Array(slots).fill(null);
 }
 
-export default App
+function App() {
+  const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+
+  // Slice the full palette down to the configured color count
+  const activeColors = ALL_COLORS.slice(0, settings.colors);
+
+  const [secret, setSecret] = useState<string[]>(() =>
+    generateSecret(activeColors, settings.slots, settings.duplicates),
+  );
+  const [guesses, setGuesses] = useState<GuessEntry[]>([]);
+  const [currentGuess, setCurrentGuess] = useState<Color[]>(
+    initGuess(settings.slots),
+  );
+  const [activeRow, setActiveRow] = useState(0);
+  const [pickerSide, setPickerSide] = useState<PickerSide>("left");
+  const [gameOver, setGameOver] = useState(false);
+  const [won, setWon] = useState(false);
+
+  const { getStats, recordWin, recordLoss, clearStats } = useStats();
+
+  // Start a fresh game whenever settings change
+  function startNewGame(nextSettings: GameSettings) {
+    const colors = ALL_COLORS.slice(0, nextSettings.colors);
+    setSecret(
+      generateSecret(colors, nextSettings.slots, nextSettings.duplicates),
+    );
+    setGuesses([]);
+    setCurrentGuess(initGuess(nextSettings.slots));
+    setActiveRow(0);
+    setGameOver(false);
+    setWon(false);
+  }
+
+  function handleSettingsChange(next: GameSettings) {
+    setSettings(next);
+    startNewGame(next);
+  }
+
+  const handleToggleSide = useCallback(() => {
+    setPickerSide((prev) => (prev === "left" ? "right" : "left"));
+  }, []);
+
+  const handleReset = useCallback(() => {
+    startNewGame(settings);
+  }, [settings]);
+
+  function handlePlaceColor(index: number, color: string) {
+    if (gameOver) return;
+    setCurrentGuess((prev) => {
+      const updated = [...prev];
+      updated[index] = color;
+      return updated;
+    });
+  }
+
+  function handleClearSlot(index: number) {
+    if (gameOver) return;
+    setCurrentGuess((prev) => {
+      const updated = [...prev];
+      updated[index] = null;
+      return updated;
+    });
+  }
+
+  function handleSubmitGuess() {
+    if (currentGuess.includes(null) || gameOver) return;
+
+    const filledGuess = currentGuess as string[];
+    const feedback = computeFeedback(filledGuess, secret);
+    const newGuesses = [...guesses, { guess: filledGuess, feedback }];
+    setGuesses(newGuesses);
+
+    if (feedback.black === settings.slots) {
+      setWon(true);
+      setGameOver(true);
+      recordWin(settings, newGuesses.length);
+    } else if (activeRow + 1 >= settings.guesses) {
+      setGameOver(true);
+      recordLoss(settings);
+    }
+
+    setCurrentGuess(initGuess(settings.slots));
+    setActiveRow((prev) => prev + 1);
+  }
+
+  const currentStats = getStats(settings);
+
+  return (
+    <div className="app">
+      <Header onToggleSide={handleToggleSide} onReset={handleReset} />
+
+      <div className={`game-area ${pickerSide}`}>
+        <Sidebar colors={activeColors} />
+        <Board
+          guesses={guesses}
+          currentGuess={currentGuess}
+          activeRow={activeRow}
+          slots={settings.slots}
+          maxRows={settings.guesses}
+          onPlaceColor={handlePlaceColor}
+          onClearSlot={handleClearSlot}
+          onSubmit={handleSubmitGuess}
+          gameOver={gameOver}
+          won={won}
+          secret={secret}
+        />
+        <InfoPanel
+          settings={settings}
+          stats={currentStats}
+          onSettingsChange={handleSettingsChange}
+          onClearStats={clearStats}
+        />
+      </div>
+    </div>
+  );
+}
+
+export default App;
