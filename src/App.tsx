@@ -14,8 +14,6 @@ function initGuess(slots: number): Color[] {
 
 function App() {
   const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
-
-  // Slice the full palette down to the configured color count
   const activeColors = ALL_COLORS.slice(0, settings.colors);
 
   const [secret, setSecret] = useState<string[]>(() =>
@@ -29,10 +27,10 @@ function App() {
   const [pickerSide, setPickerSide] = useState<PickerSide>("left");
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
   const { getStats, recordWin, recordLoss, clearStats } = useStats();
 
-  // Start a fresh game whenever settings change
   function startNewGame(nextSettings: GameSettings) {
     const colors = ALL_COLORS.slice(0, nextSettings.colors);
     setSecret(
@@ -43,6 +41,7 @@ function App() {
     setActiveRow(0);
     setGameOver(false);
     setWon(false);
+    setSelectedColor(null);
   }
 
   function handleSettingsChange(next: GameSettings) {
@@ -58,6 +57,11 @@ function App() {
     startNewGame(settings);
   }, [settings]);
 
+  function handleSelectColor(color: string) {
+    // Tap same color again to deselect
+    setSelectedColor((prev) => (prev === color ? null : color));
+  }
+
   function handlePlaceColor(index: number, color: string) {
     if (gameOver) return;
     setCurrentGuess((prev) => {
@@ -65,6 +69,8 @@ function App() {
       updated[index] = color;
       return updated;
     });
+    // Auto-deselect after placing so the next tap can select a new color
+    setSelectedColor(null);
   }
 
   function handleClearSlot(index: number) {
@@ -95,6 +101,7 @@ function App() {
 
     setCurrentGuess(initGuess(settings.slots));
     setActiveRow((prev) => prev + 1);
+    setSelectedColor(null);
   }
 
   const currentStats = getStats(settings);
@@ -104,13 +111,18 @@ function App() {
       <Header onToggleSide={handleToggleSide} onReset={handleReset} />
 
       <div className={`game-area ${pickerSide}`}>
-        <Sidebar colors={activeColors} />
+        <Sidebar
+          colors={activeColors}
+          selectedColor={selectedColor}
+          onSelectColor={handleSelectColor}
+        />
         <Board
           guesses={guesses}
           currentGuess={currentGuess}
           activeRow={activeRow}
           slots={settings.slots}
           maxRows={settings.guesses}
+          selectedColor={selectedColor}
           onPlaceColor={handlePlaceColor}
           onClearSlot={handleClearSlot}
           onSubmit={handleSubmitGuess}

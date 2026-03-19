@@ -157,6 +157,28 @@ body {
   transform: scale(1.1);
 }
 
+/* Selected state — tap to select/deselect */
+.color-pin-selected {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 0 3px black,
+    0 0 0 5px white,
+    0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+/* Slots pulse subtly when a color is selected, inviting a tap */
+.slot.slot-droppable {
+  border-style: solid;
+  border-color: #888;
+  cursor: pointer;
+}
+
+.slot.slot-droppable:hover {
+  border-color: black;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
 /* ----------------------------------------
    INFO PANEL (RIGHT PANEL)
 ---------------------------------------- */

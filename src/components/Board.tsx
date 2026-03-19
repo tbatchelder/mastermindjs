@@ -8,6 +8,7 @@ interface BoardProps {
   activeRow: number;
   slots: number;
   maxRows: number;
+  selectedColor: string | null;
   onPlaceColor: (index: number, color: string) => void;
   onClearSlot: (index: number) => void;
   onSubmit: () => void;
@@ -22,6 +23,7 @@ export function Board({
   activeRow,
   slots,
   maxRows,
+  selectedColor,
   onPlaceColor,
   onClearSlot,
   onSubmit,
@@ -61,6 +63,7 @@ export function Board({
               key={i}
               guess={currentGuess}
               slots={slots}
+              selectedColor={selectedColor}
               onPlaceColor={onPlaceColor}
               onClearSlot={onClearSlot}
               onSubmit={onSubmit}
