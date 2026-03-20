@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import type { Color, GuessEntry, PickerSide, GameSettings } from "./types";
 import { ALL_COLORS, DEFAULT_SETTINGS } from "./constants";
 import { computeFeedback, generateSecret } from "./utils/feedback";
