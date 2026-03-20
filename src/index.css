@@ -515,12 +515,75 @@ body {
 }
 
 /* ----------------------------------------
+   DESKTOP/MOBILE VISIBILITY TOGGLES
+---------------------------------------- */
+.mobile-only {
+  display: none;
+}
+.desktop-only {
+  display: flex;
+}
+
+/* ----------------------------------------
+   MOBILE MENU
+---------------------------------------- */
+.header-menu {
+  position: relative;
+}
+
+.menu-btn {
+  background: black;
+  color: white;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 2px solid black;
+  border-radius: 4px;
+  min-width: 140px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: #f0f0f0;
+}
+
+.menu-item + .menu-item {
+  border-top: 1px solid #eee;
+}
+
+/* ----------------------------------------
    MOBILE
 ---------------------------------------- */
 @media (max-width: 600px) {
-  /* Hide the info panel entirely */
-  .info-panel {
+  .desktop-only {
     display: none;
+  }
+
+  .mobile-only {
+    display: block;
   }
 
   /* Compact color strip */
@@ -529,7 +592,6 @@ body {
     padding: 0.5rem 0.25rem;
   }
 
-  /* Hide the "Colors" label — no room */
   .sidebar h3 {
     display: none;
   }
@@ -540,12 +602,12 @@ body {
     margin: 0.3rem auto;
   }
 
-  /* Tighten the board */
+  /* Board gets full remaining width */
   .board {
     padding: 0.5rem;
+    flex: 1;
   }
 
-  /* Shrink slots slightly so 4 + feedback + submit fit */
   .slot {
     width: 30px;
     height: 30px;
@@ -566,14 +628,46 @@ body {
     font-size: 0.8rem;
   }
 
-  /* Stack header buttons if needed */
-  .header-right {
-    gap: 0.25rem;
+  /* Info panel — hidden off-screen by default, slides in when open */
+  .info-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 280px;
+    max-width: 85vw;
+    border-left: 2px solid var(--border-color);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+    z-index: 200;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+    padding-top: 2.5rem; /* room for close button */
   }
 
-  .toggle-btn,
-  .reset-btn {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
+  .info-panel.panel-open {
+    transform: translateX(0);
+  }
+
+  /* Backdrop */
+  .panel-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 199;
+  }
+
+  /* Close button inside panel */
+  .panel-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #333;
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
   }
 }

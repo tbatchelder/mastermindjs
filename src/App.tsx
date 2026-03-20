@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import type { Color, GuessEntry, PickerSide, GameSettings } from "./types";
 import { ALL_COLORS, DEFAULT_SETTINGS } from "./constants";
 import { computeFeedback, generateSecret } from "./utils/feedback";
@@ -28,6 +28,7 @@ function App() {
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [settingsPanelOpen, setSettingsPanelOpen] = useState(false);
 
   const { getStats, recordWin, recordLoss, clearStats } = useStats();
 
@@ -58,7 +59,6 @@ function App() {
   }, [settings]);
 
   function handleSelectColor(color: string) {
-    // Tap same color again to deselect
     setSelectedColor((prev) => (prev === color ? null : color));
   }
 
@@ -69,7 +69,6 @@ function App() {
       updated[index] = color;
       return updated;
     });
-    // Auto-deselect after placing so the next tap can select a new color
     setSelectedColor(null);
   }
 
@@ -108,7 +107,11 @@ function App() {
 
   return (
     <div className="app">
-      <Header onToggleSide={handleToggleSide} onReset={handleReset} />
+      <Header
+        onToggleSide={handleToggleSide}
+        onReset={handleReset}
+        onOpenSettings={() => setSettingsPanelOpen(true)}
+      />
 
       <div className={`game-area ${pickerSide}`}>
         <Sidebar
@@ -135,6 +138,8 @@ function App() {
           stats={currentStats}
           onSettingsChange={handleSettingsChange}
           onClearStats={clearStats}
+          mobileOpen={settingsPanelOpen}
+          onMobileClose={() => setSettingsPanelOpen(false)}
         />
       </div>
     </div>
