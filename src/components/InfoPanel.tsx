@@ -1,4 +1,3 @@
-import React from "react";
 import type { GameSettings, LevelStats } from "../types";
 import {
   SLOT_MIN,
